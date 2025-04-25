@@ -4,7 +4,7 @@ import uuid
 from typing import List
 
 from computing import Curve
-from typemodels import CurveData
+from typemodels import SignalGenerationParameters
 
 router = APIRouter()
 
@@ -22,8 +22,6 @@ router = APIRouter()
 
 
 @router.post('/create')
-async def create_task(request: CurveData):
-    curve = Curve(data=request)
-    plots = curve.plot()
-    # print(plots)
-    return {'plots': plots}
+async def create_task(request: SignalGenerationParameters):
+    pass
+    # return {'plots': plots}

@@ -1,3 +1,3 @@
-from .curve_data import CurveData
+from .signal_parameters import SignalGenerationParameters
 
-__all__=('CurveData')
+__all__=('SignalGenerationParametrs')

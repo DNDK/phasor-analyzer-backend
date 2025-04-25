@@ -1,10 +1,8 @@
 import numpy as np
-from scipy.integrate import simpson, trapezoid
-
-from .curve import Curve
+from scipy.integrate import simpson
 
 class PhasorAnalyzer:
-    def __init__(self, curves_set: list[Curve]):
+    def __init__(self, curves_set: list[dict[str, np.ndarray]]):
         """
             Анализатор принимает набор кривых. U и V в классе сейчас вообще не используются, хочу дописать это в дальнейшем
         """
@@ -13,7 +11,7 @@ class PhasorAnalyzer:
         self.u = None
         self.v = None
         self.taus = (None, None)
-        self.omega = 2 * np.pi / (curves_set[0].t[-1] - curves_set[0].t[0])
+        self.omega = 2 * np.pi / (curves_set[0]['time_axis'][-1])
         self.tau1 = None
         self.tau2 = None
         self.a = None
@@ -29,26 +27,41 @@ class PhasorAnalyzer:
         """
         dws = []
         for cr in self.curves_set:
-            data = cr.get_data()
-            d = data['y']
-            t = data['x']
+            # data = cr
+            d = None
+            needs_deconvolution = True
 
-            dt = t[1] - t[0]
+            if cr['noisy'] is not None:
+                d = cr['noisy']
+            elif cr['convolved'] is not None:
+                d = cr['convolved']
+            else:
+                needs_deconvolution = False
+                d = cr['scaled_raw']
 
-            d_norm = d / trapezoid(d, t)
+            if d is None:
+                raise ValueError('intensity values ended up to be None. Analysis cannot be performed')
 
-            omega = 2*np.pi / (t[-1]-t[0]) # вот так потом буду считать омега
+            t = cr['time_axis']
 
-            numr = simpson(d_norm*np.exp(1j*omega*t), t)
-            denr = simpson(d_norm, t)
+            # omega = 2*np.pi / (t[-1]-t[0]) # вот так потом буду считать омега
+            
+            numr = simpson((d*np.exp(1j*self.omega*t)), t)
+            denr = simpson(d, t)
 
-            irf_y = (1 / (np.sqrt(2 * np.pi) * 0.08)) * np.exp(-((t - 2) ** 2) / (2 * 0.08 ** 2))
-            irf_y = irf_y / irf_y.sum() * 5000
-            irfN = simpson(irf_y*np.exp(1j*omega*t), t)
-            irfD = simpson(irf_y, t)
-            irf_FOURIER = irfN/irfD
+            dw = numr/denr
 
-            dws.append((numr/denr)/irf_FOURIER)
+            # irf_y = (1 / (np.sqrt(2 * np.pi) * 0.08)) * np.exp(-((t - 2) ** 2) / (2 * 0.08 ** 2))
+            if cr['irf'] is not None and needs_deconvolution:
+                irfN = simpson((cr['irf'] * np.exp(1j*self.omega*cr['time_axis'])), t)
+                irfD = simpson(cr['irf'], t)
+                # irf_y = irf_y / irf_y.sum() * 5000
+                # irfN = simpson(irf_y*np.exp(1j*omega*t), t)
+                # irfD = simpson(irf_y, t)
+                irf_FOURIER = irfN/irfD
+                dw/=irf_FOURIER
+
+            dws.append(dw)
         self.dws = dws
         return dws
     
@@ -63,7 +76,7 @@ class PhasorAnalyzer:
         y = [dw.imag for dw in self.dws]
 
         A = np.vstack([x, np.ones(len(x))]).T
-        v, u = np.linalg.lstsq(A, y)[0]
+        v, u = np.linalg.lstsq(A, y, rcond=None)[0]
         
         self.v, self.u = v, u
 
@@ -93,4 +106,4 @@ class PhasorAnalyzer:
             ak1 = 1 - ak2
             ak1s.append(ak1)
             ak2s.append(ak2)
-        return ak1s, ak2s
+        return ak1s, ak2s   

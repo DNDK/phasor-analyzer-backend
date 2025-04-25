@@ -131,7 +131,7 @@ class PhasorAnalyzer:
 
             if cr['noisy'] is not None:
                 d = cr['noisy']
-            elif cr['convolved']:
+            elif cr['convolved'] is not None:
                 d = cr['convolved']
             else:
                 needs_deconvolution = False
@@ -199,7 +199,7 @@ class PhasorAnalyzer:
         ak2s = []
 
         for i, curve in enumerate(self.curves_set):
-            ak = ( len(self.curves_set) * self.omega * (self.tau2 + self.tau1) * self.dws[i].real + (np.pow(self.omega, 2) * self.tau1 * self.tau2 - 1)*self.dws[i].imag - self.omega*self.tau2 ) / (self.omega * (self.tau1 - self.tau2))
+            ak = ( self.omega * (self.tau2 + self.tau1) * self.dws[i].real + (np.pow(self.omega, 2) * self.tau1 * self.tau2 - 1)*self.dws[i].imag - self.omega*self.tau2 ) / (self.omega * (self.tau1 - self.tau2))
             ak2 = (self.tau1 * ak) / (self.tau1*ak + self.tau2*(1-ak))
             ak1 = 1 - ak2
             ak1s.append(ak1)
@@ -217,8 +217,8 @@ plt.show()
 
 # инициализация массива a1 для каждой кривой в наборе.
 CURVE_NUM = 100 # кол-во кривых
-a1s = np.linspace(0.01, 0.99, CURVE_NUM)
-curves = [Curve(a1=a1, apply_convolution=False, add_noise=False).get_data() for a1 in a1s]
+a1s = np.linspace(0.01, 0.9, CURVE_NUM)
+curves = [Curve(tau1=3, tau2=5, a1=a1, apply_convolution=True, add_noise=True).get_data() for a1 in a1s]
 # [plt.plot(cr.get_data()['time_axis'], cr.get_data()['noisy']) for cr in curves]
 
 # инициализация анализатора и получение массива коэффициентов фурье
