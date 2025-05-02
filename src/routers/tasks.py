@@ -4,7 +4,7 @@ import uuid
 from typing import List
 
 from computing import Curve
-from typemodels import SignalGenerationParameters
+from schemas import SignalGenerationParameters
 
 router = APIRouter()
 

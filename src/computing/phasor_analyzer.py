@@ -106,4 +106,5 @@ class PhasorAnalyzer:
             ak1 = 1 - ak2
             ak1s.append(ak1)
             ak2s.append(ak2)
-        return ak1s, ak2s   
+        return ak1s, ak2s
+    

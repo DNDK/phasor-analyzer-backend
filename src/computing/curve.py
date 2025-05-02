@@ -1,5 +1,6 @@
 import numpy as np
 from .irf_function import IRF
+from convolution import convolution
 from scipy.signal import fftconvolve
 
 
@@ -60,7 +61,7 @@ class Curve:
         """
         # irf_to_convolve = self.IRF if not self.add_noise else self.scaled_IRF
         if self.apply_convolution:
-            Ig = fftconvolve(self.scaled_raw, self.scaled_IRF, mode='full')[:len(self.scaled_raw)] * self.dt
+            Ig = convolution(self.scaled_raw, self.scaled_IRF, self.dt)[:len(self.scaled_raw)]
             self.convolved = np.clip(Ig, a_min=0, a_max=None)
         return self
             

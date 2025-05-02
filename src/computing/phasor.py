@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import fftconvolve
 from scipy.integrate import trapezoid, simpson
 from typing import TypedDict
+from convolution import convolution
 
 def IRF(t, m, sigma):
     return (1 / (np.sqrt(2 * np.pi) * sigma)) * np.exp(-((t - m) ** 2) / (2 * sigma ** 2))
@@ -68,7 +69,8 @@ class Curve:
         """
         # irf_to_convolve = self.IRF if not self.add_noise else self.scaled_IRF
         if self.apply_convolution:
-            Ig = fftconvolve(self.scaled_raw, self.scaled_IRF, mode='full')[:len(self.scaled_raw)] * self.dt
+            # Ig = fftconvolve(self.scaled_raw, self.scaled_IRF, mode='full')[:len(self.scaled_raw)] * self.dt
+            Ig = convolution(self.scaled_raw, self.scaled_IRF, self.dt)[:len(self.scaled_raw)]
             self.convolved = np.clip(Ig, a_min=0, a_max=None)
         return self
             
@@ -210,15 +212,15 @@ class PhasorAnalyzer:
 
 
 # пример кривой
-crv = Curve(a1=0.1, add_noise=False, apply_convolution=False)
+crv = Curve(a1=0.1, add_noise=True, apply_convolution=True)
 data = crv.get_data()
 plt.plot(data['time_axis'], data['scaled_raw'])
 plt.show()
 
 # инициализация массива a1 для каждой кривой в наборе.
-CURVE_NUM = 100 # кол-во кривых
-a1s = np.linspace(0.01, 0.9, CURVE_NUM)
-curves = [Curve(tau1=3, tau2=5, a1=a1, apply_convolution=True, add_noise=True).get_data() for a1 in a1s]
+CURVE_NUM = 15 # кол-во кривых
+a1s = np.linspace(0.1, 0.9, CURVE_NUM)
+curves = [Curve(tau1=1, tau2=3, a1=a1, apply_convolution=True, add_noise=False).get_data() for a1 in a1s]
 # [plt.plot(cr.get_data()['time_axis'], cr.get_data()['noisy']) for cr in curves]
 
 # инициализация анализатора и получение массива коэффициентов фурье
