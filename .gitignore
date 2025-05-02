@@ -9,3 +9,6 @@ venv/
 .env.*
 # Cache
 __pycache__/
+
+*.sublime-project
+pyrightconfig.json
