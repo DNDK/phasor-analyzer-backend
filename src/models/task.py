@@ -21,7 +21,6 @@ class Task(Base):
 	status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)
 	analysis_results_id = Column(Integer, ForeignKey("analysis_results.id"), nullable=True)
 	analysis_results = relationship("AnalysisResults")
-	error_log = Column(String, nullable=True)
 	processing_time = Column(Float, nullable=True)  # Время выполнения (сек)
 
 
