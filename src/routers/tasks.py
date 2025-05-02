@@ -4,9 +4,11 @@ import uuid
 from typing import List
 
 from computing import Curve
-from schemas import SignalGenerationParameters
 
-router = APIRouter()
+from schemas import Task, TaskCreate
+
+
+router = APIRouter(prefix='/tasks')
 
 # class TaskData(BaseModel):
 #     a1: float
@@ -20,8 +22,6 @@ router = APIRouter()
 # class Task(TaskData):
 #     id: str
 
-
 @router.post('/create')
-async def create_task(request: SignalGenerationParameters):
+def handle_task_create(task: TaskCreate):
     pass
-    # return {'plots': plots}

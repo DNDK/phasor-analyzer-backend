@@ -1,9 +1,12 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+class TaskRepository:
+    def create_task(self):
+        pass
 
-Base = declarative_base()
+    def get_task(self):
+        pass
 
-class Task(Base):
-    __tablename__ = 'tasks'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    def update_task(self):
+        pass
+
+    def delete_task(self):
+        pass
