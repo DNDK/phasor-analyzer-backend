@@ -1,13 +1,6 @@
+from .base_repository import BaseRepository
 
-class CurveRepository:
-    def create_curve(self):
-        pass
+from models.curve import Curve
 
-    def get_curve(self):
-        pass
-
-    def update_curve(self):
-        pass
-
-    def delete_curve(self):
-        pass
+class CurveRepository(BaseRepository[Curve]):
+    pass

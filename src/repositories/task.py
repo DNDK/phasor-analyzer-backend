@@ -1,12 +1,6 @@
-class TaskRepository:
-    def create_task(self):
-        pass
+from .base_repository import BaseRepository
 
-    def get_task(self):
-        pass
+from models.task import Task
 
-    def update_task(self):
-        pass
-
-    def delete_task(self):
-        pass
+class CurveRepository(BaseRepository[Task]):
+    pass

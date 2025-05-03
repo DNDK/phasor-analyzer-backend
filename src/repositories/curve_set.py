@@ -1,16 +1,6 @@
-from schemas import CurveSet, CurveSetCreate
+from .base_repository import BaseRepository
 
+from models.curve_set import CurveSet
 
-class CurveSetRepository:
-    def get_curve_set(self):
-        pass
-
-    def create_curve_set(self):
-        pass
-
-    def update_curve_set(self):
-        pass
-
-    def delete_curve_set(self):
-        pass
-
+class CurveRepository(BaseRepository[CurveSet]):
+    pass

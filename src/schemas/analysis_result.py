@@ -1,8 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-class CurveSet:
-	pass
+from .curve_set import CurveSet
+
+
 class AnalysisResultCreate(BaseModel):
+	model_config = ConfigDict(from_attributes=True)
+
 	curve_set_id: int 
 	curve_set: CurveSet
 

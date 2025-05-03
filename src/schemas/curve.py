@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Union
 
 class CurveCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     time_axis: list[float]
     
     raw: list[float]  # Значения интенсивности [I1, I2, ...]

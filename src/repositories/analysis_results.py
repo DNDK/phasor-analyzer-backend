@@ -1,12 +1,6 @@
-class AnalysisResultsRepository:
-    def create_analysis_results(self):
-        pass
+from .base_repository import BaseRepository
 
-    def get_analysis_results(self):
-        pass
+from models.analysis_results import AnalysisResult
 
-    def update_analysis_results(self):
-        pass
-
-    def delete_analysis_results(self):
-        pass
+class CurveRepository(BaseRepository[AnalysisResult]):
+    pass

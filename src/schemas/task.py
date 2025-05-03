@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 import enum
 
@@ -16,6 +16,8 @@ class TaskCreate(BaseModel):
     """
     Task creation model
     """
+    model_config = ConfigDict(from_attributes=True)
+
     created_at: datetime
     status: TaskStatus
     
