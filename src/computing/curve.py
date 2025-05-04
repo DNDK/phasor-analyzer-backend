@@ -1,6 +1,6 @@
 import numpy as np
 from .irf_function import IRF
-from convolution import convolution
+from .convolution import convolution
 from scipy.signal import fftconvolve
 
 

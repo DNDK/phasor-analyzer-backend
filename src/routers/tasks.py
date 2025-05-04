@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import uuid
 from typing import List
 
-from computing import Curve
+from computing.curve import Curve
 
 from schemas import Task, TaskCreate
 
@@ -22,6 +22,6 @@ router = APIRouter(prefix='/tasks')
 # class Task(TaskData):
 #     id: str
 
-@router.post('/create')
-def handle_task_create(task: TaskCreate):
-    pass
+# @router.post('/create')
+# def handle_task_create(task: TaskCreate):
+#     pass

@@ -1,28 +1,30 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
+from sqlalchemy.ext.declarative import declarative_base
 
 from fastapi import Depends
 
 from contextlib import asynccontextmanager
-from typing import Type
+from typing import Type, TypeVar
 
 from models.curve_set import CurveSet
-from models.task import Task
+from models.task import Task as TaskModel
+from repositories.analysis_results import AnalysisResultsRepository
 from repositories.base_repository import BaseRepository
 from repositories.curve_set import CurveSetRepository
 from repositories.task import TaskRepository
+from services.analysis_results import AnalysisResultsService
 from services.curve_sets import CurveSetsService
 from services.task import TaskService
 
-engine = create_async_engine('postgresql+asyncpg://postgres@localhost:5473/phasordb', echo=True, future=True)
+engine = create_async_engine('postgresql+asyncpg://phasorer:phasor123@localhost:5432/phasordb', echo=True, future=True)
 
-def async_session_generator():
-    return async_sessionmaker(engine)
+SessionLocal = async_sessionmaker(bind=engine, autoflush=False)
+
 
 @asynccontextmanager
 async def get_session():
-    async_session = async_session_generator()
-    session = async_session()
+    session = SessionLocal()
     try:
         yield session
 
@@ -32,13 +34,25 @@ async def get_session():
     finally:
         await session.close()
 
-def get_repo(repo: Type[BaseRepository], model: Type[DeclarativeBase], session: AsyncSession = Depends(get_session)):
-    return repo(session=session, model=model)
+# General function for repo DI
 
+# TRepo = TypeVar('T', bounds=BaseRepository)
+T = TypeVar('T', bound=BaseRepository)
 
-def get_task_servie(task_repo: TaskRepository = Depends(lambda: get_repo(TaskRepository, Task))):
+async def get_repo(repo: Type[T], model: Type[DeclarativeBase]) -> T:
+    async with SessionLocal() as session: 
+        return repo(session=session, model=model)
+
+# DI for each service
+async def get_task_servie():
+    task_repo = await get_repo(TaskRepository, TaskModel)
     return TaskService(task_repo)
 
-def get_curve_set_servie(curve_set_repo: CurveSetRepository = Depends(lambda: get_repo(CurveSetRepository, CurveSet))):
-    return CurveSetsService(curve_set_repo)
+async def get_curve_set_servie():
+    async with SessionLocal() as session:
+        rep = CurveSetRepository(session=session, model=CurveSet)
+        srv = CurveSetsService(rep)
+        return srv
 
+def get_analysis_results_service(analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, CurveSet))):
+    return AnalysisResultsService(analysis_results_repo)
