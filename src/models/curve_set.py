@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 
 from models.curve import Curve
 
-Base = declarative_base()
+from .base import Base
 
 class CurveSet(Base):
     __tablename__ = 'curve_sets'
@@ -12,4 +12,4 @@ class CurveSet(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(String)
 
-    curves = relationship(Curve)
+    curves = relationship(Curve, back_populates='curve_set')

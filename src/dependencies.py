@@ -1,6 +1,9 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, Session
-from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+# from sqlalchemy.orm import DeclarativeBase, Session
+# from sqlalchemy.ext.declarative import declarative_base
+
+from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase
+from sqlalchemy import create_engine
 
 from fastapi import Depends
 
@@ -16,23 +19,30 @@ from repositories.task import TaskRepository
 from services.analysis_results import AnalysisResultsService
 from services.curve_sets import CurveSetsService
 from services.task import TaskService
+from sqlalchemy import MetaData
+import asyncio
+from models.base import Base
 
-engine = create_async_engine('postgresql+asyncpg://phasorer:phasor123@localhost:5432/phasordb', echo=True, future=True)
+engine = create_engine('postgresql://phasorer:phasor123@localhost:5432/phasordb?options=-c%20search_path%3Dphsch', echo=True, future=True)
 
-SessionLocal = async_sessionmaker(bind=engine, autoflush=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False)
 
+meta = MetaData()
 
-@asynccontextmanager
-async def get_session():
+meta.create_all(engine)
+
+Base.metadata.create_all(bind=engine)
+
+def get_session():
     session = SessionLocal()
     try:
         yield session
 
     except:
-        await session.rollback()
+        session.rollback()
 
     finally:
-        await session.close()
+        session.close()
 
 # General function for repo DI
 
@@ -40,7 +50,7 @@ async def get_session():
 T = TypeVar('T', bound=BaseRepository)
 
 async def get_repo(repo: Type[T], model: Type[DeclarativeBase]) -> T:
-    async with SessionLocal() as session: 
+    with SessionLocal() as session: 
         return repo(session=session, model=model)
 
 # DI for each service
@@ -49,7 +59,7 @@ async def get_task_servie():
     return TaskService(task_repo)
 
 async def get_curve_set_servie():
-    async with SessionLocal() as session:
+    with SessionLocal() as session:
         rep = CurveSetRepository(session=session, model=CurveSet)
         srv = CurveSetsService(rep)
         return srv

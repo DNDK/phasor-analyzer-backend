@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Float, ARRAY, null
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, ARRAY, null
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from .base import Base
 
 class Curve(Base):
     """
@@ -10,7 +11,7 @@ class Curve(Base):
     __tablename__ = 'curves'
         
     id = Column(Integer, primary_key=True, autoincrement=True)
-    time_axis = ARRAY(Float)
+    time_axis = Column(ARRAY(Float))
     
     raw = Column(ARRAY(Float))  # Значения интенсивности [I1, I2, ...]
     raw_scaled = Column(ARRAY(Float))
@@ -20,3 +21,6 @@ class Curve(Base):
 
     irf = Column(ARRAY(Float), nullable=True)  # Импульсный отклик (опционально)
     irf_scaled = Column(ARRAY(Float), nullable=True)
+
+    curve_set_id = Column(Integer, ForeignKey('curve_sets.id'))
+    curve_set = relationship('CurveSet', back_populates='curves')

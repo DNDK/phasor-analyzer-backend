@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, Enum, ForeignKe
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
+from .base import Base
 
 class TaskStatus(enum.Enum):
     PENDING = "pending"
@@ -20,7 +20,7 @@ class Task(Base):
 	created_at = Column(DateTime, default=datetime.utcnow)
 	status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)
 	analysis_results_id = Column(Integer, ForeignKey("analysis_results.id"), nullable=True)
-	analysis_results = relationship("AnalysisResults")
+	analysis_results = relationship("AnalysisResult")
 	processing_time = Column(Float, nullable=True)  # Время выполнения (сек)
 
 

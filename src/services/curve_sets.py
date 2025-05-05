@@ -6,8 +6,8 @@ class CurveSetsService:
 	def __init__(self, curve_set_repo: CurveSetRepository):
 		self.repo = curve_set_repo
 
-	async def get_curve_set(self, id):
-		cset = await self.repo.get_by_id(id)
+	def get_curve_set(self, id):
+		cset = self.repo.get_by_id(id)
 		return cset
 
 	async def create_curve_set(self, data: CurveSetCreate):

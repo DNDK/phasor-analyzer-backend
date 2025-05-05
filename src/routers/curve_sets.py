@@ -15,8 +15,8 @@ def handle_create_curve_set():
 async def handle_ping(serv: CurveSetsService = Depends(get_curve_set_servie)):
     # a = await serv.get_curve_set(1)
     # print(a)
-    await serv.get_curve_set(0)
-    return {'a': 'dick'}
+    yee = serv.get_curve_set(1)
+    return yee
 
 @curve_sets_router.get('/{set_id}')
 def handle_get_curve_set(set_id: int):
