@@ -3,6 +3,7 @@ from schemas import CurveSet, CurveSetCreate, Curve, CurveCreate
 from dependencies import get_curve_set_servie
 from services.curve_sets import CurveSetsService
 
+
 curve_sets_router = APIRouter()
 
 
@@ -25,4 +26,8 @@ def handle_get_curve_set(set_id: int):
 @curve_sets_router.patch('/add_curve/{id}')
 def handle_add_curve(set_id: int):
     pass
+
+@curve_sets_router.get('/generate_curve_set')
+def handle_generate_curve_set():
+
 
