@@ -1,11 +1,14 @@
 from pydantic import BaseModel, ConfigDict
 
-from .curve import Curve
+from .curve import Curve, CurveCreate
 
-class CurveSetCreate(BaseModel):
+class CurveSetBase(BaseModel):
+	description: str
+
+class CurveSetCreate(CurveSetBase):
     model_config = ConfigDict(from_attributes=True)
-    description: str
-    curves: list[Curve]
+    curves: list[CurveCreate]
 
-class CurveSet(CurveSetCreate):
+class CurveSet(CurveSetBase):
     id: int
+    curves: list[Curve]

@@ -3,8 +3,6 @@ from pydantic import BaseModel
 import uuid
 from typing import List
 
-from computing.curve import Curve
-
 from schemas import Task, TaskCreate
 
 

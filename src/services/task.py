@@ -7,7 +7,7 @@ class TaskService:
         self.repo = task_repository
 
     async def get_task(self, id) -> Task:
-        task = await self.repo.get_by_id(id)
+        task = self.repo.get_by_id(id)
         task_ser = Task.model_validate(task)
 
         return task_ser

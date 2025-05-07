@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from typing import Type, TypeVar, Generic
 
 TModel = TypeVar('TModel', bound=DeclarativeBase)
-# TSchema = TypeVar('TSchema', bound=BaseModel)
-# TCreateSchema = TypeVar('TCreateSchema', bound=BaseModel)
+TSchema = TypeVar('TSchema', bound=BaseModel)
+TCreateSchema = TypeVar('TCreateSchema', bound=BaseModel)
 
 class BaseRepository(Generic[TModel]):
     def __init__(self, session: Session, model: Type[TModel]):
@@ -17,8 +17,8 @@ class BaseRepository(Generic[TModel]):
         res = self._session.get(self.model, pk, options=options)
         return res
 
-    def create(self, data):
-        db_item = self.model(**data)
+    def create(self, data: BaseModel):
+        db_item = self.model(**data.model_dump())
         self._session.add(db_item)
         self._session.commit()
         self._session.refresh(db_item)

@@ -1,4 +1,6 @@
 import numpy as np
+
+from schemas.curve import CurveCreate
 from .irf_function import IRF
 from .convolution import convolution
 from scipy.signal import fftconvolve
@@ -18,8 +20,8 @@ class CurveGenerator:
         self.add_noise = config.add_noise
 
         # для IRF
-        if config.apply_convolution and config.irf_config:
-            raise ValueError('irf_config should be defined to apply_convolution')
+        if config.apply_convolution and config.irf_config is None:
+            raise ValueError('irf_config should be defined to apply convolution')
         self.m = config.irf_config.m if config.irf_config is not None else 0.0
         self.sigma = config.irf_config.sigma if config.irf_config is not None else 0.0
 
@@ -86,11 +88,12 @@ class CurveGenerator:
             В noisy могут находится как шумные данные, так и данные без шума, или даже без свертки (Если это указано в параметрах конструктора)
         """
         self.generate().generate_irf().scale().convolve_IRF().noise()
-        return {
+        return CurveCreate.model_validate({
             'time_axis': self.t, 
-            'irf': self.IRF,
             'raw': self.raw,
             'convolved': self.convolved,
             'noisy': self.noisy,
-            'scaled_raw': self.scaled_raw
-        }
+            'raw_scaled': self.scaled_raw,
+            'irf': self.IRF,
+            'irf_scaled': self.scaled_IRF
+        })

@@ -12,8 +12,10 @@ from typing import Type, TypeVar
 
 from models.curve_set import CurveSet
 from models.task import Task as TaskModel
+from models.curve import Curve
 from repositories.analysis_results import AnalysisResultsRepository
 from repositories.base_repository import BaseRepository
+from repositories.curve import CurveRepository
 from repositories.curve_set import CurveSetRepository
 from repositories.task import TaskRepository
 from services.analysis_results import AnalysisResultsService
@@ -61,7 +63,8 @@ async def get_task_servie():
 async def get_curve_set_servie():
     with SessionLocal() as session:
         rep = CurveSetRepository(session=session, model=CurveSet)
-        srv = CurveSetsService(rep)
+        crep = CurveRepository(session=session, model=Curve)
+        srv = CurveSetsService(rep, crep)
         return srv
 
 def get_analysis_results_service(analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, CurveSet))):
