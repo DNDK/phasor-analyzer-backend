@@ -1,30 +1,26 @@
 from pydantic import BaseModel, ConfigDict
-from datetime import datetime
+from datetime import date, datetime
 import enum
+from typing import Optional
 
 
 from .analysis_result import AnalysisResult
+from enums.task_status import TaskStatus
 
-class TaskStatus(enum.Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+class TaskBase(BaseModel):
+	created_at: datetime
+	status: TaskStatus = TaskStatus.PENDING
 
-
-class TaskCreate(BaseModel):
+class TaskCreate(TaskBase):
     """
     Task creation model
     """
     model_config = ConfigDict(from_attributes=True)
-
-    created_at: datetime
-    status: TaskStatus
     
-    analysis_results_id: int
-    analalysis_results: AnalysisResult
+    analysis_results_id: Optional[int] = None
+    analalysis_results: Optional[AnalysisResult] = None
 
-    processing_time: float
+    processing_time: Optional[float] = None
 
 class Task(TaskCreate):
     id: int

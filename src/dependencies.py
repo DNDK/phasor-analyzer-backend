@@ -10,6 +10,7 @@ from fastapi import Depends
 from contextlib import asynccontextmanager
 from typing import Type, TypeVar
 
+from models.analysis_results import AnalysisResult
 from models.curve_set import CurveSet
 from models.task import Task as TaskModel
 from models.curve import Curve
@@ -51,21 +52,21 @@ def get_session():
 # TRepo = TypeVar('T', bounds=BaseRepository)
 T = TypeVar('T', bound=BaseRepository)
 
-async def get_repo(repo: Type[T], model: Type[DeclarativeBase]) -> T:
+def get_repo(repo: Type[T], model: Type[DeclarativeBase]) -> T:
     with SessionLocal() as session: 
         return repo(session=session, model=model)
 
 # DI for each service
-async def get_task_servie():
-    task_repo = await get_repo(TaskRepository, TaskModel)
+def get_task_servie():
+    task_repo = get_repo(TaskRepository, TaskModel)
     return TaskService(task_repo)
 
-async def get_curve_set_servie():
+def get_curve_set_servie():
     with SessionLocal() as session:
         rep = CurveSetRepository(session=session, model=CurveSet)
         crep = CurveRepository(session=session, model=Curve)
         srv = CurveSetsService(rep, crep)
         return srv
 
-def get_analysis_results_service(analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, CurveSet))):
+def get_analysis_results_service(analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, AnalysisResult))):
     return AnalysisResultsService(analysis_results_repo)
