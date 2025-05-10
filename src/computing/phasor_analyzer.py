@@ -33,13 +33,13 @@ class PhasorAnalyzer:
             d = None
             needs_deconvolution = True
 
-            if cr.noisy is not None:
-                d = cr.noisy
-            elif cr.convolved is not None:
-                d = cr.convolved
+            if cr.noisy is not None and len(cr.noisy) >= len(cr.time_axis):
+                d = np.array(cr.noisy[:len(cr.time_axis)])
+            elif cr.convolved is not None and len(cr.convolved) >= len(cr.time_axis):
+                d = np.array(cr.convolved[:len(cr.time_axis)])
             else:
                 needs_deconvolution = False
-                d = cr.scaled_raw
+                d = np.array(cr.raw_scaled[:len(cr.time_axis)])
 
             if d is None:
                 raise ValueError('intensity values ended up to be None. Analysis cannot be performed')
@@ -48,6 +48,11 @@ class PhasorAnalyzer:
 
             # omega = 2*np.pi / (t[-1]-t[0]) # вот так потом буду считать омега
             
+            print('\n\n')
+            print('DLEN', len(d))
+            print('TLEN', len(t))
+            print('\n\n')
+
             numr = simpson((d*np.exp(1j*self.omega*t)), t)
             denr = simpson(d, t)
 

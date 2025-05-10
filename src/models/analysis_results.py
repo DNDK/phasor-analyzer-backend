@@ -5,27 +5,27 @@ from sqlalchemy.orm import relationship
 from .base import Base
 
 class AnalysisResult(Base):
-	"""
-	Model for Phasor Analysis results.
-	Stores curve set, dw coefficients; fourier approximation; tau1, tau2, a1, a2 estimations
-	"""
-	__tablename__ = 'analysis_results'
+    """
+    Model for Phasor Analysis results.
+    Stores curve set, dw coefficients; fourier approximation; tau1, tau2, a1, a2 estimations
+    """
+    __tablename__ = 'analysis_results'
 
-	# meta
-	id = Column(Integer, primary_key=True, autoincrement=True)
-	curve_set_id = Column(Integer, ForeignKey('curve_sets.id'))
-	curve_set = relationship('CurveSet')
+    # meta
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    curve_set_id = Column(Integer, ForeignKey('curve_sets.id'))
+    curve_set = relationship('CurveSet')
 
-	# Results
-	dw_real = Column(ARRAY(Float))
-	dw_imag = Column(ARRAY(Float))
+    # Results
+    dw_real = Column(ARRAY(Float))
+    dw_imag = Column(ARRAY(Float))
 
-	coeff_v = Column(Float)
-	coeff_u = Column(Float)
+    coeff_v = Column(Float)
+    coeff_u = Column(Float)
 
-	tau1 = Column(Float)
-	tau2 = Column(Float)
+    tau1 = Column(Float)
+    tau2 = Column(Float)
 
-	a_coeffs = Column(ARRAY(Float))
-
-	omega = Column(Float)
+    a1_coeffs = Column(ARRAY(Float))
+    a2_coeffs = Column(ARRAY(Float))
+    omega = Column(Float)
