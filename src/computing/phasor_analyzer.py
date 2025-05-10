@@ -1,22 +1,24 @@
 import numpy as np
 from scipy.integrate import simpson
 
+from schemas.curve_set import CurveSet
+
 class PhasorAnalyzer:
-    def __init__(self, curves_set: list[dict[str, np.ndarray]]):
+    def __init__(self, curve_set: CurveSet):
         """
             Анализатор принимает набор кривых. U и V в классе сейчас вообще не используются, хочу дописать это в дальнейшем
         """
-        self.curves_set = curves_set
-        self.dws = None
-        self.u = None
-        self.v = None
+        self.curve_set = curve_set
+        self.dws = np.empty(1)
+        self.u = np.empty(1)
+        self.v = np.empty(1)
         self.taus = (None, None)
-        self.omega = 2 * np.pi / (curves_set[0]['time_axis'][-1])
+        self.omega = 2 * np.pi / (curve_set.curves[0].time_axis[-1])
         self.tau1 = None
         self.tau2 = None
-        self.a = None
-        self.a1 = None
-        self.a2 = None
+        self.a = np.empty(1)
+        self.a1 = np.empty(1)
+        self.a2 = np.empty(1)
 
     def calc_D(self):
         """
@@ -26,23 +28,23 @@ class PhasorAnalyzer:
             returns array in format of [ [Di] ] for each curve in the set
         """
         dws = []
-        for cr in self.curves_set:
+        for cr in self.curve_set.curves:
             # data = cr
             d = None
             needs_deconvolution = True
 
-            if cr['noisy'] is not None:
-                d = cr['noisy']
-            elif cr['convolved'] is not None:
-                d = cr['convolved']
+            if cr.noisy is not None:
+                d = cr.noisy
+            elif cr.convolved is not None:
+                d = cr.convolved
             else:
                 needs_deconvolution = False
-                d = cr['scaled_raw']
+                d = cr.scaled_raw
 
             if d is None:
                 raise ValueError('intensity values ended up to be None. Analysis cannot be performed')
 
-            t = cr['time_axis']
+            t = np.array(cr.time_axis)
 
             # omega = 2*np.pi / (t[-1]-t[0]) # вот так потом буду считать омега
             
@@ -52,9 +54,10 @@ class PhasorAnalyzer:
             dw = numr/denr
 
             # irf_y = (1 / (np.sqrt(2 * np.pi) * 0.08)) * np.exp(-((t - 2) ** 2) / (2 * 0.08 ** 2))
-            if cr['irf'] is not None and needs_deconvolution:
-                irfN = simpson((cr['irf'] * np.exp(1j*self.omega*cr['time_axis'])), t)
-                irfD = simpson(cr['irf'], t)
+            if cr.irf is not None and needs_deconvolution:
+                np_irf = np.array(cr.irf)
+                irfN = simpson((np_irf * np.exp(1j*self.omega*t)), t)
+                irfD = simpson(np_irf, t)
                 # irf_y = irf_y / irf_y.sum() * 5000
                 # irfN = simpson(irf_y*np.exp(1j*omega*t), t)
                 # irfD = simpson(irf_y, t)
@@ -100,7 +103,7 @@ class PhasorAnalyzer:
         ak1s = []
         ak2s = []
 
-        for i, curve in enumerate(self.curves_set):
+        for i, _ in enumerate(self.curve_set):
             ak = ( self.omega * (self.tau2 + self.tau1) * self.dws[i].real + (np.pow(self.omega, 2) * self.tau1 * self.tau2 - 1)*self.dws[i].imag - self.omega*self.tau2 ) / (self.omega * (self.tau1 - self.tau2))
             ak2 = (self.tau1 * ak) / (self.tau1*ak + self.tau2*(1-ak))
             ak1 = 1 - ak2

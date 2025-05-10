@@ -68,5 +68,8 @@ def get_curve_set_servie():
         srv = CurveSetsService(rep, crep)
         return srv
 
-def get_analysis_results_service(analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, AnalysisResult))):
-    return AnalysisResultsService(analysis_results_repo)
+def get_analysis_results_service(
+    analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, AnalysisResult)),
+    curve_set_repo: CurveSetRepository = Depends(lambda: get_repo(CurveSetRepository, CurveSet))
+    ):
+    return AnalysisResultsService(analysis_results_repo, curve_set_repo)

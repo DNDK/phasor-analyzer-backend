@@ -29,13 +29,13 @@ class Curve:
         self.sigma = sigma
 
         # Хранение данных на каждом этапе генерации
-        self.raw = None
-        self.convolved = None
-        self.normalized = None
-        self.noisy = None
-        self.IRF = None
-        self.scaled_IRF = None
-        self.scaled_raw = None
+        self.raw = np.empty(1)
+        self.convolved = np.empty(1)
+        self.normalized = np.empty(1)
+        self.noisy = np.empty(1)
+        self.IRF = np.empty(1)
+        self.scaled_IRF = np.empty(1)
+        self.scaled_raw = np.empty(1)
 
         # суммы для нормировки
         self.strg = strg
