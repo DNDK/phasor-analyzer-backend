@@ -13,5 +13,5 @@ def handle_analysis_start(config: AnalysisConfig, service: AnalysisResultsServic
 
 @analysis_router.get('/{id}')
 def handle_get_results(id: int, service: AnalysisResultsService = Depends(get_analysis_results_service)):
-    yoo_yoo = service.get_analysis_results(id)
-    return yoo_yoo
+    results = service.get_analysis_results(id)
+    return results
