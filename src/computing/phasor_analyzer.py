@@ -10,12 +10,12 @@ class PhasorAnalyzer:
         """
         self.curve_set = curve_set
         self.dws = np.empty(1)
-        self.u = np.empty(1)
-        self.v = np.empty(1)
+        self.u = 0
+        self.v = 0
         self.taus = (None, None)
         self.omega = 2 * np.pi / (curve_set.curves[0].time_axis[-1])
-        self.tau1 = None
-        self.tau2 = None
+        self.tau1 = 0
+        self.tau2 = 0
         self.a = np.empty(1)
         self.a1 = np.empty(1)
         self.a2 = np.empty(1)
@@ -90,8 +90,8 @@ class PhasorAnalyzer:
             raise ValueError('calc_taus should be called after approx_fourier')
         root = np.sqrt(1-4*self.u*(self.u+self.v))
 
-        tau1 = (1-root) / (2*self.omega*self.u)
-        tau2 = (1+root) / (2*self.omega*self.u)
+        tau1: float = (1-root) / (2*self.omega*self.u)
+        tau2: float = (1+root) / (2*self.omega*self.u)
 
         self.tau1, self.tau2 = tau1, tau2
         return tau1, tau2

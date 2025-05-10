@@ -28,7 +28,7 @@ from models.base import Base
 
 engine = create_engine('postgresql://phasorer:phasor123@localhost:5432/phasordb?options=-c%20search_path%3Dphsch', echo=True, future=True)
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 meta = MetaData()
 

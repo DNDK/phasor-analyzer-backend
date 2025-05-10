@@ -12,4 +12,4 @@ class CurveSet(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(String)
 
-    curves = relationship(Curve, back_populates='curve_set')
+    curves = relationship('Curve', back_populates='curve_set')
