@@ -12,3 +12,4 @@ class CurveSetCreate(CurveSetBase):
 class CurveSet(CurveSetBase):
     id: int
     curves: list[Curve]
+    task_id: int

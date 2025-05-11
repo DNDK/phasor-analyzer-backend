@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -13,3 +13,5 @@ class CurveSet(Base):
     description = Column(String)
 
     curves = relationship('Curve', back_populates='curve_set')
+    task_id = Column(Integer, ForeignKey('tasks.id'))
+    task = relationship("Task", back_populates="curve_set", uselist=False)

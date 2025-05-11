@@ -3,6 +3,8 @@ from datetime import date, datetime
 import enum
 from typing import Optional
 
+from schemas.curve_set import CurveSet, CurveSetCreate
+
 
 from .analysis_result import AnalysisResult
 from enums.task_status import TaskStatus
@@ -21,6 +23,16 @@ class TaskCreate(TaskBase):
     analalysis_results: Optional[AnalysisResult] = None
 
     processing_time: Optional[float] = None
+    title: str = 'Task'
+    curve_set: Optional[CurveSetCreate] = None
 
-class Task(TaskCreate):
+class Task(TaskBase):
     id: int
+    model_config = ConfigDict(from_attributes=True)
+    
+    analysis_results_id: Optional[int] = None
+    analalysis_results: Optional[AnalysisResult] = None
+
+    processing_time: Optional[float] = None
+    title: str = 'Task'
+    curve_set: Optional[CurveSet] = None

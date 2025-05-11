@@ -15,6 +15,8 @@ class BaseRepository(Generic[TModel]):
 
     def get_by_id(self, pk, options=()):
         res = self._session.get(self.model, pk, options=options)
+        print('\n\n\n\n', res.__dict__, '\n\n\n\n\n')
+        return res
 
     def create(self, data: BaseModel):
         db_item = self.model(**data.model_dump())

@@ -2,12 +2,18 @@ from schemas.task import TaskBase, TaskCreate, Task
 
 from repositories.task import TaskRepository
 
+from fastapi import HTTPException
+
 class TaskService:
     def __init__(self, task_repository: TaskRepository) -> None:
         self.repo = task_repository
 
-    def get_task(self, id) -> Task:
+    def get_task(self, id) -> Task | None:
         task = self.repo.get_by_id(id)
+        print('\n\n\n\n', task, '\n\n\n\n')
+        if task is None:
+            raise HTTPException(status_code=404, detail='Task not found')
+
         task_ser = Task.model_validate(task)
 
         return task_ser

@@ -34,3 +34,8 @@ def handle_create_task(task_service: TaskService = Depends(get_task_servie)):
 	task_base = TaskBase(created_at = datetime.now(), status = TaskStatus.PENDING)
 	initted_task = task_service.init_task(task_base)
 	return initted_task
+
+@tasks_router.get("/{id}")
+def handle_get_task(id: int, service: TaskService = Depends(get_task_servie)):
+    task = service.get_task(id)
+    return task
