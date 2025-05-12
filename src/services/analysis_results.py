@@ -2,6 +2,7 @@ from repositories.analysis_results import AnalysisResultsRepository
 from repositories.curve_set import CurveSetRepository
 from schemas import AnalysisResult, AnalysisResultCreate
 from schemas.analysis_config import AnalysisConfig
+from schemas.analysis_result import AnalysisResultPatch
 from schemas.curve_set import CurveSet
 
 from computing.phasor_analyzer import PhasorAnalyzer
@@ -48,3 +49,15 @@ class AnalysisResultsService:
         result_db = self.repo.create(result)
         result_ser = AnalysisResult.model_validate(result_db, from_attributes=True)
         return result_ser
+
+    def update_result(self, id: int, data: AnalysisResultPatch) -> AnalysisResult:
+        result_db = self.repo.update(id, data)
+        result = AnalysisResult.model_validate(result_db, from_attributes=True)
+        return result
+
+    def delete_result(self, id: int) -> bool:
+        try:
+            self.repo.delete(id)
+            return True
+        except:
+            return False

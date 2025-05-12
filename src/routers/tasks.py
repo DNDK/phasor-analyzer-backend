@@ -4,7 +4,7 @@ import uuid
 from typing import List
 
 from schemas import Task, TaskCreate
-from schemas.task import TaskBase, TaskStatus
+from schemas.task import TaskBase, TaskPatch, TaskStatus
 
 from datetime import datetime
 
@@ -39,3 +39,16 @@ def handle_create_task(task_service: TaskService = Depends(get_task_servie)):
 def handle_get_task(id: int, service: TaskService = Depends(get_task_servie)):
     task = service.get_task(id)
     return task
+
+@tasks_router.patch("/{id}")
+def handle_patch_task(id: int, data: TaskPatch, service: TaskService = Depends(get_task_servie)):
+    task = service.update_task(id, data)
+    return task
+
+@tasks_router.delete("/{id}")
+def handle_delete_task(id: int, service: TaskService = Depends(get_task_servie)):
+    success = service.delete_task(id)
+    if success:
+        return {"message": "OK"}
+    else:
+        return {"message": "FAIL"}

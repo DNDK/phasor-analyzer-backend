@@ -1,4 +1,4 @@
-from schemas.task import TaskBase, TaskCreate, Task
+from schemas.task import TaskBase, TaskCreate, Task, TaskPatch
 
 from repositories.task import TaskRepository
 
@@ -28,4 +28,16 @@ class TaskService:
         initted_task_db = self.repo.init_task(data)
         task = Task.model_validate(initted_task_db, from_attributes=True)
         return task
+
+    def update_task(self, id: int, data: TaskPatch) -> Task:
+        task_db = self.repo.update(id, data)
+        task = Task.model_validate(task_db, from_attributes=True)
+        return task
+
+    def delete_task(self, id: int):
+        try:
+            self.repo.delete(id)
+            return True
+        except:
+            return False
     # maybe more, for now will be enough

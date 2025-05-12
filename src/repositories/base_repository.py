@@ -25,12 +25,14 @@ class BaseRepository(Generic[TModel]):
         self._session.refresh(db_item)
         return db_item
 
-    def update(self, pk, data):
+    def update(self, pk, data: BaseModel):
         db_item = self._session.get(self.model, pk)
         if not db_item:
             raise ValueError(f'{self.model.__name__} with pk={pk} was not found')
 
-        for key, value in data.items():
+        update_data = data.model_dump(exclude_unset=True)
+
+        for key, value in update_data.items():
             setattr(db_item, key, value)
 
         self._session.commit()

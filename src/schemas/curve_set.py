@@ -14,3 +14,8 @@ class CurveSet(CurveSetBase):
     id: int
     curves: list[Curve]
     task_id: int
+
+class CurveSetPatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    curves: list[Curve] | None = None
+    task_id: int | None = None

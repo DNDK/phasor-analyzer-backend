@@ -1,6 +1,6 @@
 from repositories.curve_set import CurveSetRepository
 from repositories.curve import CurveRepository
-from schemas.curve_set import CurveSetCreate, CurveSet
+from schemas.curve_set import CurveSetCreate, CurveSet, CurveSetPatch
 from schemas.curve import Curve, CurveCreate
 from schemas.generation_config import CurveConfig, IrfConfig, CurveSetConfig
 
@@ -54,6 +54,20 @@ class CurveSetsService:
         return curve_set_serialized
 
     def add_curve_to_set(self, curve: CurveCreate):
+        """ 
+        Does literally nothing. Nothing at all. Like, it has only `pass` inside
+        """
         pass
 
+    def update_curve_set(self, id: int, data: CurveSetPatch) -> CurveSet:
+        set_db = self.curveset_repo.update(id, data)
+        curveset = CurveSet.model_validate(set_db, from_attributes=True)
+        return curveset
+
+    def delete_curve_set(self, id: int):
+        try:
+            self.curveset_repo.delete(id)
+            return True
+        except:
+            return False
     # maybe more functions

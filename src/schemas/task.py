@@ -11,8 +11,8 @@ from .analysis_result import AnalysisResult
 from enums.task_status import TaskStatus
 
 class TaskBase(BaseModel):
-	created_at: datetime
-	status: TaskStatus = TaskStatus.PENDING
+    created_at: datetime
+    status: TaskStatus = TaskStatus.PENDING
 
 class TaskCreate(TaskBase):
     """
@@ -38,8 +38,12 @@ class Task(TaskBase):
     title: str = 'Task'
     curve_set: Optional[CurveSet] = None
 
-    @validator('curve_set', pre=True)
-    def validate_curve_set(cls, v):
-        if isinstance(v, DeclarativeBase):
-            return v.__dict__
-        return v
+class TaskPatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    analysis_results_id: int | None = None
+    analalysis_results: AnalysisResult | None = None
+
+    processing_time: float | None = None
+    title: str | None = None
+    curve_set: CurveSetCreate | None = None
