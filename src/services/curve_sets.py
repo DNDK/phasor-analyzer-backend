@@ -49,7 +49,7 @@ class CurveSetsService:
             curves=curves
             )
 
-        curve_set_db = self.curveset_repo.create_with_curves(curve_set)
+        curve_set_db = self.curveset_repo.create_with_curves(curve_set, generation_config.task_id)
         curve_set_serialized = CurveSet.model_validate(curve_set_db, from_attributes=True)
         return curve_set_serialized
 

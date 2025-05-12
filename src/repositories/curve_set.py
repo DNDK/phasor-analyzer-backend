@@ -2,11 +2,12 @@ from .base_repository import BaseRepository
 
 from models.curve_set import CurveSet as CurveSetModel
 from models.curve import Curve as CurveModel
+from models.task import Task
 from schemas import CurveSetCreate, CurveSet, Curve
 from pydantic import BaseModel
 
 class CurveSetRepository(BaseRepository[CurveSetModel]):
-    def create_with_curves(self, data: CurveSetCreate) -> CurveSet:
+    def create_with_curves(self, data: CurveSetCreate, task_id: int) -> CurveSet:
     # Конвертируем Pydantic-модель в словарь
         data_dict = data.model_dump(exclude_unset=True)
 
@@ -26,4 +27,9 @@ class CurveSetRepository(BaseRepository[CurveSetModel]):
 
         self._session.commit()
         self._session.refresh(db_curve_set)
+
+        task = self._session.get_one(Task, task_id)
+        task.curve_set = db_curve_set
+        self._session.commit()
+
         return db_curve_set

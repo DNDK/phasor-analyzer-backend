@@ -19,6 +19,6 @@ class Task(Base):
     analysis_results = relationship("AnalysisResult")
     processing_time = Column(Float, nullable=True)  # Время выполнения (сек)
     title = Column(String, default='Task')
-    curve_set = relationship("CurveSet", back_populates='task', uselist=False)
+    curve_set = relationship("CurveSet", back_populates='task', uselist=False, lazy="joined")
 
 

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, validator
 from datetime import date, datetime
 import enum
 from typing import Optional
+from sqlalchemy.orm import DeclarativeBase
 
 from schemas.curve_set import CurveSet, CurveSetCreate
 
@@ -36,3 +37,9 @@ class Task(TaskBase):
     processing_time: Optional[float] = None
     title: str = 'Task'
     curve_set: Optional[CurveSet] = None
+
+    @validator('curve_set', pre=True)
+    def validate_curve_set(cls, v):
+        if isinstance(v, DeclarativeBase):
+            return v.__dict__
+        return v
