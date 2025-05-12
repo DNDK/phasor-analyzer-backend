@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from schemas import CurveSet, CurveSetCreate, Curve, CurveCreate
+from schemas.curve_set import CurveSetPatch
 from schemas.generation_config import CurveSetConfig, IrfConfig, CurveConfig
 from dependencies import get_curve_set_servie
 from services.curve_sets import CurveSetsService
@@ -9,8 +10,10 @@ curve_sets_router = APIRouter()
 
 
 @curve_sets_router.post('/create')
-def handle_create_curve_set():
-    pass
+def handle_create_curve_set(service: CurveSetsService = Depends(get_curve_set_servie)):
+    curve_conf = CurveSetCreate(curves=[])
+    curveset = service.create_curve_set(curve_conf)
+    return curveset
 
 
 @curve_sets_router.get('/ping')
@@ -46,6 +49,19 @@ def handle_generate_curve_set(config: CurveSetConfig, curve_set_service: CurveSe
 def handle_get_curve_set(set_id: int):
     print(set_id)
 
-@curve_sets_router.patch('/add_curve/{id}')
-def handle_add_curve(set_id: int):
-    pass
+# @curve_sets_router.patch('/add_curve/{id}')
+# def handle_add_curve(set_id: int):
+#     pass
+
+@curve_sets_router.patch("/{id}")
+def handle_patch_task(id: int, data: CurveSetPatch, service: CurveSetsService = Depends(get_curve_set_servie)):
+    task = service.update_curve_set(id, data)
+    return task
+
+@curve_sets_router.delete("/{id}")
+def handle_delete_task(id: int, service: CurveSetsService = Depends(get_curve_set_servie)):
+    success = service.delete_curve_set(id)
+    if success:
+        return {"message": "OK"}
+    else:
+        return {"message": "FAIL"}
