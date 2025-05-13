@@ -1,3 +1,4 @@
+from models.task import Task
 from repositories.analysis_results import AnalysisResultsRepository
 from repositories.curve_set import CurveSetRepository
 from schemas import AnalysisResult, AnalysisResultCreate
@@ -22,10 +23,12 @@ class AnalysisResultsService:
         crv = self.repo.create(data=data)
         return AnalysisResult.model_validate(crv)
 
-    def create_result(self, data: AnalysisConfig) -> AnalysisResult:
-        curve_set_db = self.curve_set_repo.get_by_id(data.curve_set_id)
-        curve_set = CurveSet.model_validate(curve_set_db, from_attributes=True)
-        # print(curve_set.curves)
+    def create_result(self, data: Task) -> AnalysisResult:
+        # curve_set_db = self.curve_set_repo.get_by_id(data.curve_set_id)
+        # curve_set = CurveSet.model_validate(curve_set_db, from_attributes=True)
+        # # print(curve_set.curves)
+
+        curve_set = data.curve_set
 
         phasor = PhasorAnalyzer(curve_set)
         

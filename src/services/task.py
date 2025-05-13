@@ -10,7 +10,6 @@ class TaskService:
 
     def get_task(self, id) -> Task | None:
         task = self.repo.get_by_id(id)
-        print('\n\n\n\n', task, '\n\n\n\n')
         if task is None:
             raise HTTPException(status_code=404, detail='Task not found')
 
