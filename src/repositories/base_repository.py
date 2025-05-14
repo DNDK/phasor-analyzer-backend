@@ -1,8 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase, Session
+from sqlalchemy import select
 from pydantic import BaseModel
-from abc import ABC, abstractmethod
 
-from typing import Type, TypeVar, Generic
+from typing import Sequence, Type, TypeVar, Generic
 
 TModel = TypeVar('TModel', bound=DeclarativeBase)
 TSchema = TypeVar('TSchema', bound=BaseModel)
@@ -12,6 +12,11 @@ class BaseRepository(Generic[TModel]):
     def __init__(self, session: Session, model: Type[TModel]):
         self._session = session
         self.model = model
+
+    def get_all(self) -> Sequence[TModel]:
+        stmt = select(self.model)
+        res = self._session.execute(stmt).scalars().all()
+        return res
 
     def get_by_id(self, pk, options=()):
         res = self._session.get(self.model, pk, options=options)

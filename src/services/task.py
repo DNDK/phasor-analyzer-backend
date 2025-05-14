@@ -39,4 +39,9 @@ class TaskService:
             return True
         except:
             return False
+
+    def get_all_tasks(self) -> list[Task]:
+        tasks = self.repo.get_all()
+        tasks_serialized: list[Task] = [Task.model_validate(t, from_attributes=True) for t in tasks]
+        return tasks_serialized
     # maybe more, for now will be enough

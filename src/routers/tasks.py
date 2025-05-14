@@ -29,6 +29,12 @@ tasks_router = APIRouter()
 # def handle_task_create(task: TaskCreate):
 #     pass
 
+@tasks_router.get('')
+@tasks_router.get('/')
+def handle_get_all_tasks(service: TaskService = Depends(get_task_servie)):
+    tasks = service.get_all_tasks()
+    return tasks
+
 @tasks_router.post('/create')
 def handle_create_task(task_service: TaskService = Depends(get_task_servie)):
 	task_base = TaskBase(created_at = datetime.now(), status = TaskStatus.PENDING)
