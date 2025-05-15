@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from fastapi import Depends
 
 from contextlib import asynccontextmanager
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Generator
 
 from models.analysis_results import AnalysisResult
 from models.curve_set import CurveSet
@@ -25,6 +25,8 @@ from services.task import TaskService
 from sqlalchemy import MetaData
 import asyncio
 from models.base import Base
+from contextlib import contextmanager
+
 
 engine = create_engine('postgresql://phasorer:phasor123@localhost:5432/phasordb?options=-c%20search_path%3Dphsch', echo=True, future=True)
 
@@ -36,40 +38,52 @@ meta.create_all(engine)
 
 Base.metadata.create_all(bind=engine)
 
-def get_session():
+T = TypeVar('T', bound=BaseRepository)
+
+engine = create_engine(
+    'postgresql://phasorer:phasor123@localhost:5432/phasordb?options=-c%20search_path%3Dphsch',
+    echo=True,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True
+)
+
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
+# Создание таблиц (лучше вынести в отдельный скрипт инициализации)
+Base.metadata.create_all(bind=engine)
+
+# Универсальный менеджер сессий
+@contextmanager
+def get_db() -> Generator[Session, None, None]:
     session = SessionLocal()
     try:
         yield session
-
-    except:
+    except Exception:
         session.rollback()
-
+        raise
     finally:
         session.close()
 
-# General function for repo DI
+# Фабрика репозиториев
+def get_repository(repo_type: Type[T], model: Type[DeclarativeBase]) -> T:
+    with get_db() as session:
+        return repo_type(session=session, model=model)
 
-# TRepo = TypeVar('T', bounds=BaseRepository)
-T = TypeVar('T', bound=BaseRepository)
-
-def get_repo(repo: Type[T], model: Type[DeclarativeBase]) -> T:
-    with SessionLocal() as session: 
-        return repo(session=session, model=model)
-
-# DI for each service
+# DI для сервисов
 def get_task_servie():
-    task_repo = get_repo(TaskRepository, TaskModel)
-    return TaskService(task_repo)
+    with get_db() as session:
+        task_repo = TaskRepository(session=session, model=TaskModel)
+        return TaskService(task_repo)
 
 def get_curve_set_servie():
-    with SessionLocal() as session:
-        rep = CurveSetRepository(session=session, model=CurveSet)
-        crep = CurveRepository(session=session, model=Curve)
-        srv = CurveSetsService(rep, crep)
-        return srv
+    with get_db() as session:
+        curve_set_repo = CurveSetRepository(session=session, model=CurveSet)
+        curve_repo = CurveRepository(session=session, model=Curve)
+        return CurveSetsService(curve_set_repo, curve_repo)
 
-def get_analysis_results_service(
-    analysis_results_repo: AnalysisResultsRepository = Depends(lambda: get_repo(AnalysisResultsRepository, AnalysisResult)),
-    curve_set_repo: CurveSetRepository = Depends(lambda: get_repo(CurveSetRepository, CurveSet))
-    ):
-    return AnalysisResultsService(analysis_results_repo, curve_set_repo)
+def get_analysis_results_service():
+    with get_db() as session:
+        analysis_repo = AnalysisResultsRepository(session=session, model=AnalysisResult)
+        curve_set_repo = CurveSetRepository(session=session, model=CurveSet)
+        return AnalysisResultsService(analysis_repo, curve_set_repo)
