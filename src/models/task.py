@@ -14,7 +14,7 @@ class Task(Base):
         
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    status = Column(Enum(TaskStatus, native_enum=True), default=TaskStatus.PENDING)
+    status = Column(Enum(TaskStatus, native_enum=True, schema='phsch'), default=TaskStatus.PENDING)
     analysis_results_id = Column(Integer, ForeignKey("analysis_results.id"), nullable=True)
     analysis_results = relationship("AnalysisResult")
     processing_time = Column(Float, nullable=True)  # Время выполнения (сек)
