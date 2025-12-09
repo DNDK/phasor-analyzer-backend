@@ -47,3 +47,4 @@ class TaskPatch(BaseModel):
     processing_time: float | None = None
     title: str | None = None
     curve_set: CurveSetCreate | None = None
+    status: TaskStatus | None = None

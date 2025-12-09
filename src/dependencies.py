@@ -74,16 +74,16 @@ def get_repository(repo_type: Type[T], model: Type[DeclarativeBase]) -> T:
 def get_task_servie():
     with get_db() as session:
         task_repo = TaskRepository(session=session, model=TaskModel)
-        return TaskService(task_repo)
+        yield TaskService(task_repo)
 
 def get_curve_set_servie():
     with get_db() as session:
         curve_set_repo = CurveSetRepository(session=session, model=CurveSet)
         curve_repo = CurveRepository(session=session, model=Curve)
-        return CurveSetsService(curve_set_repo, curve_repo)
+        yield CurveSetsService(curve_set_repo, curve_repo)
 
 def get_analysis_results_service():
     with get_db() as session:
         analysis_repo = AnalysisResultsRepository(session=session, model=AnalysisResult)
         curve_set_repo = CurveSetRepository(session=session, model=CurveSet)
-        return AnalysisResultsService(analysis_repo, curve_set_repo)
+        yield AnalysisResultsService(analysis_repo, curve_set_repo)

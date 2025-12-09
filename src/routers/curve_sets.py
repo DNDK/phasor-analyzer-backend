@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from schemas import CurveSet, CurveSetCreate, Curve, CurveCreate
-from schemas.curve_set import CurveSetPatch
+from schemas import CurveSet, CurveSetCreate, Curve, CurveCreate, UploadedCurveSet
+from schemas.curve_set import CurveSetPatch, CurveSetUserDataCreate
 from schemas.generation_config import CurveSetConfig, IrfConfig, CurveConfig
 from dependencies import get_curve_set_servie
 from services.curve_sets import CurveSetsService
@@ -44,6 +44,25 @@ def handle_generate_curve_set(config: CurveSetConfig, curve_set_service: CurveSe
 
     cs = curve_set_service.generate_curve_set(config)
     return cs
+
+@curve_sets_router.post('/upload')
+def handle_upload_curve_set(payload: UploadedCurveSet, curve_set_service: CurveSetsService = Depends(get_curve_set_servie)):
+    """
+    Accepts raw time/intensity (and optional IRF) arrays, creates curves, and attaches them to the task.
+    """
+    curveset = curve_set_service.create_curve_set_from_uploaded(payload)
+    return curveset
+
+@curve_sets_router.post('/create_from_data')
+def handle_create_curve_set_from_user_data(
+    payload: CurveSetUserDataCreate,
+    curve_set_service: CurveSetsService = Depends(get_curve_set_servie),
+):
+    curve_set = curve_set_service.create_curve_set_for_task(
+        CurveSetCreate(description=payload.description, curves=payload.curves),
+        payload.task_id,
+    )
+    return curve_set
 
 @curve_sets_router.get('/{set_id}')
 def handle_get_curve_set(set_id: int):

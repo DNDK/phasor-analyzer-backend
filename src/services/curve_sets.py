@@ -2,6 +2,7 @@ from repositories.curve_set import CurveSetRepository
 from repositories.curve import CurveRepository
 from schemas.curve_set import CurveSetCreate, CurveSet, CurveSetPatch
 from schemas.curve import Curve, CurveCreate
+from schemas.uploaded_curve_set import UploadedCurveSet
 from schemas.generation_config import CurveConfig, IrfConfig, CurveSetConfig
 
 from computing.curve import CurveGenerator
@@ -18,6 +19,10 @@ class CurveSetsService:
 
     def create_curve_set(self, data: CurveSetCreate):
         return self.curveset_repo.create(data)
+
+    def create_curve_set_for_task(self, data: CurveSetCreate, task_id: int) -> CurveSet:
+        curve_set_db = self.curveset_repo.create_with_curves(data, task_id)
+        return CurveSet.model_validate(curve_set_db, from_attributes=True)
 
     def generate_curve(self, config: CurveConfig):
         curve_generator = CurveGenerator(config)
@@ -52,6 +57,33 @@ class CurveSetsService:
         curve_set_db = self.curveset_repo.create_with_curves(curve_set, generation_config.task_id)
         curve_set_serialized = CurveSet.model_validate(curve_set_db, from_attributes=True)
         return curve_set_serialized
+
+    def create_curve_set_from_uploaded(self, uploaded: UploadedCurveSet) -> CurveSet:
+        """
+        Build CurveCreate objects from raw intensity + IRF arrays and attach to the given task.
+        """
+        curves: list[CurveCreate] = []
+        for curve in uploaded.curves:
+            # Align lengths defensively
+            length = min(len(curve.time_axis), len(curve.intensity))
+            time_axis = curve.time_axis[:length]
+            raw = curve.intensity[:length]
+
+            curves.append(
+                CurveCreate(
+                    time_axis=time_axis,
+                    raw=raw,
+                    raw_scaled=raw,
+                    convolved=None,
+                    noisy=None,
+                    irf=curve.irf[:length] if curve.irf else None,
+                    irf_scaled=None,
+                )
+            )
+
+        curve_set = CurveSetCreate(description=uploaded.description, curves=curves)
+        curve_set_db = self.curveset_repo.create_with_curves(curve_set, uploaded.task_id)
+        return CurveSet.model_validate(curve_set_db, from_attributes=True)
 
     def add_curve_to_set(self, curve: CurveCreate):
         """ 

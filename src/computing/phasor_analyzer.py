@@ -39,7 +39,12 @@ class PhasorAnalyzer:
                 d = np.array(cr.convolved[:len(cr.time_axis)])
             else:
                 needs_deconvolution = False
-                d = np.array(cr.raw_scaled[:len(cr.time_axis)])
+                if cr.raw_scaled is not None and len(cr.raw_scaled) >= len(cr.time_axis):
+                    d = np.array(cr.raw_scaled[:len(cr.time_axis)])
+                elif cr.raw is not None and len(cr.raw) >= len(cr.time_axis):
+                    d = np.array(cr.raw[:len(cr.time_axis)])
+                else:
+                    raise ValueError("No valid intensity data found for curve")
 
             if d is None:
                 raise ValueError('intensity values ended up to be None. Analysis cannot be performed')
@@ -108,7 +113,7 @@ class PhasorAnalyzer:
         ak1s = []
         ak2s = []
 
-        for i, _ in enumerate(self.curve_set):
+        for i, _ in enumerate(self.curve_set.curves):
             ak = ( self.omega * (self.tau2 + self.tau1) * self.dws[i].real + (np.pow(self.omega, 2) * self.tau1 * self.tau2 - 1)*self.dws[i].imag - self.omega*self.tau2 ) / (self.omega * (self.tau1 - self.tau2))
             ak2 = (self.tau1 * ak) / (self.tau1*ak + self.tau2*(1-ak))
             ak1 = 1 - ak2
