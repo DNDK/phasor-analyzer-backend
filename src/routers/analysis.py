@@ -16,11 +16,21 @@ def handle_analysis_start(config: AnalysisConfig, service: AnalysisResultsServic
     # service.create_result(config)
     # return config.model_dump()
     task = task_service.get_task(config.task_id)
-    if task is not None and task.curve_set is not None:
-        anal = service.create_result(task)
-        return anal
-    else:
+    if task.curve_set is None:
         raise HTTPException(status_code=404, detail="Either Task or CurveSet was not found")
+
+    task_service.update_task(task.id, TaskPatch(status=TaskStatus.RUNNING))
+
+    try:
+        analysis_result = service.create_result(task)
+        task_service.update_task(
+            task.id,
+            TaskPatch(status=TaskStatus.COMPLETED, analysis_results_id=analysis_result.id),
+        )
+        return analysis_result
+    except Exception as exc:
+        task_service.update_task(task.id, TaskPatch(status=TaskStatus.FAILED))
+        raise HTTPException(status_code=500, detail=str(exc))
 
 @analysis_router.post('/process_user_data')
 def handle_process_user_data(

@@ -64,6 +64,9 @@ class CurveSetsService:
         """
         curves: list[CurveCreate] = []
         for curve in uploaded.curves:
+            if curve.irf is None:
+                raise ValueError("irf must be provided for uploaded curves")
+
             # Align lengths defensively
             length = min(len(curve.time_axis), len(curve.intensity))
             time_axis = curve.time_axis[:length]
@@ -76,7 +79,7 @@ class CurveSetsService:
                     raw_scaled=raw,
                     convolved=None,
                     noisy=None,
-                    irf=curve.irf[:length] if curve.irf else None,
+                    irf=curve.irf[:length],
                     irf_scaled=None,
                 )
             )

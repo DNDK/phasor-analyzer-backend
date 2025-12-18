@@ -20,6 +20,8 @@ class CurveSetUserDataCreate(BaseModel):
     def validate_curves(self):
         if not self.curves:
             raise ValueError("curves should not be empty")
+        if any(curve.irf is None for curve in self.curves):
+            raise ValueError("irf must be provided for all user-supplied curves")
         return self
 
 class CurveSet(CurveSetBase):

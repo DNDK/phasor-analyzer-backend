@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel, model_validator
 
@@ -6,14 +6,17 @@ from pydantic import BaseModel, model_validator
 class UploadedCurve(BaseModel):
     time_axis: List[float]
     intensity: List[float]
-    irf: Optional[List[float]] = None
+    irf: List[float]
 
     @model_validator(mode="after")
     def validate_lengths(self):
+        if self.irf is None:
+            raise ValueError("irf must be provided for uploaded curves")
+
         expected_len = len(self.time_axis)
         if len(self.intensity) != expected_len:
             raise ValueError("intensity length must match time_axis length")
-        if self.irf is not None and len(self.irf) != expected_len:
+        if len(self.irf) != expected_len:
             raise ValueError("irf length must match time_axis length")
         return self
 
