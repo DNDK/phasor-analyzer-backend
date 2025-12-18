@@ -30,7 +30,8 @@ from contextlib import contextmanager
 
 # Use env override, fall back to in-container Postgres service
 raw_db_url = os.getenv("DATABASE_URL", "").strip()
-DATABASE_URL = raw_db_url or "postgresql://analyzer:analyzer_pass@db:5432/analyzer"
+# Explicitly force psycopg2 driver if not provided
+DATABASE_URL = raw_db_url or "postgresql+psycopg2://analyzer:analyzer_pass@db:5432/analyzer"
 
 # One engine/sessionmaker, no duplicates
 engine = create_engine(
