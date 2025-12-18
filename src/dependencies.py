@@ -23,15 +23,18 @@ from repositories.task import TaskRepository
 from services.analysis_results import AnalysisResultsService
 from services.curve_sets import CurveSetsService
 from services.task import TaskService
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, text
 import asyncio
 from models.base import Base
 from contextlib import contextmanager
 
-# Use env override, fall back to in-container Postgres service
+# Use env override, fall back to in-container Postgres service (with schema phsch)
 raw_db_url = os.getenv("DATABASE_URL", "").strip()
 # Explicitly force psycopg2 driver if not provided
-DATABASE_URL = raw_db_url or "postgresql+psycopg2://analyzer:analyzer_pass@db:5432/analyzer"
+DATABASE_URL = (
+    raw_db_url
+    or "postgresql+psycopg2://analyzer:analyzer_pass@db:5432/analyzer?options=-csearch_path%3Dphsch"
+)
 
 # One engine/sessionmaker, no duplicates
 engine = create_engine(
@@ -45,8 +48,10 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
-# Создание таблиц (лучше вынести в отдельный скрипт инициализации)
-Base.metadata.create_all(bind=engine)
+# Ensure schema exists, then create tables
+with engine.begin() as conn:
+  conn.execute(text("CREATE SCHEMA IF NOT EXISTS phsch"))
+  Base.metadata.create_all(bind=conn)
 
 T = TypeVar('T', bound=BaseRepository)
 
