@@ -29,10 +29,8 @@ from models.base import Base
 from contextlib import contextmanager
 
 # Use env override, fall back to in-container Postgres service
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://analyzer:analyzer_pass@db:5432/analyzer",
-)
+raw_db_url = os.getenv("DATABASE_URL", "").strip()
+DATABASE_URL = raw_db_url or "postgresql://analyzer:analyzer_pass@db:5432/analyzer"
 
 # One engine/sessionmaker, no duplicates
 engine = create_engine(
