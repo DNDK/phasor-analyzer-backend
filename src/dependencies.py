@@ -9,6 +9,7 @@ from fastapi import Depends
 
 from contextlib import asynccontextmanager
 from typing import Type, TypeVar, Generator
+import os
 
 from models.analysis_results import AnalysisResult
 from models.curve_set import CurveSet
@@ -27,31 +28,28 @@ import asyncio
 from models.base import Base
 from contextlib import contextmanager
 
+# Use env override, fall back to in-container Postgres service
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://analyzer:analyzer_pass@db:5432/analyzer",
+)
 
-engine = create_engine('postgresql://phasorer:phasor123@localhost:5432/phasordb?options=-c%20search_path%3Dphsch', echo=True, future=True)
-
-SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-
-meta = MetaData()
-
-meta.create_all(engine)
-
-Base.metadata.create_all(bind=engine)
-
-T = TypeVar('T', bound=BaseRepository)
-
+# One engine/sessionmaker, no duplicates
 engine = create_engine(
-    'postgresql://phasorer:phasor123@localhost:5432/phasordb?options=-c%20search_path%3Dphsch',
+    DATABASE_URL,
     echo=True,
     pool_size=10,
     max_overflow=20,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    future=True,
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 # Создание таблиц (лучше вынести в отдельный скрипт инициализации)
 Base.metadata.create_all(bind=engine)
+
+T = TypeVar('T', bound=BaseRepository)
 
 # Универсальный менеджер сессий
 @contextmanager
