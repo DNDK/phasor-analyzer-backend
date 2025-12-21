@@ -60,15 +60,16 @@ class CurveSetsService:
 
     def create_curve_set_from_uploaded(self, uploaded: UploadedCurveSet) -> CurveSet:
         """
-        Build CurveCreate objects from raw intensity + IRF arrays and attach to the given task.
+        Build CurveCreate objects from raw intensity arrays and a shared IRF, then attach to the given task.
         """
-        curves: list[CurveCreate] = []
-        for curve in uploaded.curves:
-            if curve.irf is None:
-                raise ValueError("irf must be provided for uploaded curves")
+        if uploaded.irf is None:
+            raise ValueError("irf must be provided for uploaded curve sets")
 
+        curves: list[CurveCreate] = []
+        irf = uploaded.irf
+        for curve in uploaded.curves:
             # Align lengths defensively
-            length = min(len(curve.time_axis), len(curve.intensity))
+            length = min(len(curve.time_axis), len(curve.intensity), len(irf))
             time_axis = curve.time_axis[:length]
             raw = curve.intensity[:length]
 
@@ -79,7 +80,7 @@ class CurveSetsService:
                     raw_scaled=raw,
                     convolved=None,
                     noisy=None,
-                    irf=curve.irf[:length],
+                    irf=irf[:length],
                     irf_scaled=None,
                 )
             )
