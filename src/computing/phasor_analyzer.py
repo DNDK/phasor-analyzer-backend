@@ -31,20 +31,19 @@ class PhasorAnalyzer:
         for cr in self.curve_set.curves:
             # data = cr
             d = None
-            needs_deconvolution = True
+            # Deconvolve whenever IRF is provided; intensity choice just sets which signal we use
+            needs_deconvolution = cr.irf is not None
 
             if cr.noisy is not None and len(cr.noisy) >= len(cr.time_axis):
                 d = np.array(cr.noisy[:len(cr.time_axis)])
             elif cr.convolved is not None and len(cr.convolved) >= len(cr.time_axis):
                 d = np.array(cr.convolved[:len(cr.time_axis)])
+            elif cr.raw_scaled is not None and len(cr.raw_scaled) >= len(cr.time_axis):
+                d = np.array(cr.raw_scaled[:len(cr.time_axis)])
+            elif cr.raw is not None and len(cr.raw) >= len(cr.time_axis):
+                d = np.array(cr.raw[:len(cr.time_axis)])
             else:
-                needs_deconvolution = False
-                if cr.raw_scaled is not None and len(cr.raw_scaled) >= len(cr.time_axis):
-                    d = np.array(cr.raw_scaled[:len(cr.time_axis)])
-                elif cr.raw is not None and len(cr.raw) >= len(cr.time_axis):
-                    d = np.array(cr.raw[:len(cr.time_axis)])
-                else:
-                    raise ValueError("No valid intensity data found for curve")
+                raise ValueError("No valid intensity data found for curve")
 
             if d is None:
                 raise ValueError('intensity values ended up to be None. Analysis cannot be performed')
@@ -61,18 +60,22 @@ class PhasorAnalyzer:
             numr = simpson((d*np.exp(1j*self.omega*t)), t)
             denr = simpson(d, t)
 
+            if denr == 0:
+                raise ValueError("Zero integral for intensity; cannot compute phasor")
+
             dw = numr/denr
 
             # irf_y = (1 / (np.sqrt(2 * np.pi) * 0.08)) * np.exp(-((t - 2) ** 2) / (2 * 0.08 ** 2))
             if cr.irf is not None and needs_deconvolution:
-                np_irf = np.array(cr.irf)
+                np_irf = np.array(cr.irf[:len(t)])
                 irfN = simpson((np_irf * np.exp(1j*self.omega*t)), t)
                 irfD = simpson(np_irf, t)
                 # irf_y = irf_y / irf_y.sum() * 5000
                 # irfN = simpson(irf_y*np.exp(1j*omega*t), t)
                 # irfD = simpson(irf_y, t)
-                irf_FOURIER = irfN/irfD
-                dw/=irf_FOURIER
+                if irfD != 0:
+                    irf_FOURIER = irfN/irfD
+                    dw/=irf_FOURIER
 
             dws.append(dw)
         self.dws = dws
