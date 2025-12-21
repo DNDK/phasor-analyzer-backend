@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, validator
+from pydantic import BaseModel, ConfigDict, validator, Field
 from datetime import date, datetime
 import enum
 from typing import Optional
@@ -11,8 +11,9 @@ from .analysis_result import AnalysisResult
 from enums.task_status import TaskStatus
 
 class TaskBase(BaseModel):
-    created_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     status: TaskStatus = TaskStatus.PENDING
+    title: str = 'Task'
     title: str = 'Task'
 
 class TaskCreate(TaskBase):
@@ -25,7 +26,6 @@ class TaskCreate(TaskBase):
     analalysis_results: Optional[AnalysisResult] = None
 
     processing_time: Optional[float] = None
-    title: str = 'Task'
     curve_set: Optional[CurveSetCreate] = None
 
 class Task(TaskBase):
@@ -36,7 +36,6 @@ class Task(TaskBase):
     analalysis_results: Optional[AnalysisResult] = None
 
     processing_time: Optional[float] = None
-    title: str = 'Task'
     curve_set: Optional[CurveSet] = None
 
 class TaskPatch(BaseModel):

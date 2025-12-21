@@ -37,17 +37,13 @@ def handle_get_all_tasks(service: TaskService = Depends(get_task_servie)):
 
 @tasks_router.post('/create')
 def handle_create_task(
-    title: str | None = None,
+    task: TaskBase | None = None,
     task_service: TaskService = Depends(get_task_servie),
 ):
     """
-    Create a task with an optional title (defaults to 'Task' if not provided).
+    Create a task with an optional title in the body (defaults to 'Task' if not provided).
     """
-    task_base = TaskBase(
-        created_at=datetime.utcnow(),
-        status=TaskStatus.PENDING,
-        title=title or "Task",
-    )
+    task_base = task or TaskBase()
     initted_task = task_service.init_task(task_base)
     return initted_task
 
