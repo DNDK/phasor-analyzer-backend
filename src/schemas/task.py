@@ -13,6 +13,7 @@ from enums.task_status import TaskStatus
 class TaskBase(BaseModel):
     created_at: datetime
     status: TaskStatus = TaskStatus.PENDING
+    title: str = 'Task'
 
 class TaskCreate(TaskBase):
     """
