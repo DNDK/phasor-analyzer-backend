@@ -30,4 +30,4 @@ class CurveConfig(SingleSetShared):
 class CurveSetConfig(SingleSetShared):
     a1_coeffs: list[float]
     num_curves: float = 10
-    task_id: int
+    title: str = "Generated Research"

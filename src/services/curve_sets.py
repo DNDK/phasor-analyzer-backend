@@ -1,9 +1,11 @@
+from fastapi import HTTPException, status
+
 from repositories.curve_set import CurveSetRepository
 from repositories.curve import CurveRepository
-from schemas.curve_set import CurveSetCreate, CurveSet, CurveSetPatch
-from schemas.curve import Curve, CurveCreate
+from schemas.curve_set import CurveSet, CurveSetCreate, CurveSetPatch, CurveSetSummary
+from schemas.curve import CurveCreate
 from schemas.uploaded_curve_set import UploadedCurveSet
-from schemas.generation_config import CurveConfig, IrfConfig, CurveSetConfig
+from schemas.generation_config import CurveConfig, CurveSetConfig
 
 from computing.curve import CurveGenerator
 
@@ -13,25 +15,35 @@ class CurveSetsService:
         self.curveset_repo = curve_set_repo
         self.curve_repo = curve_repo
 
-    def get_curve_set(self, id):
-        cset = self.curveset_repo.get_by_id(id)
-        return cset
+    # ------------------------------------------------------------------
+    # Queries
+    # ------------------------------------------------------------------
 
-    def create_curve_set(self, data: CurveSetCreate):
-        return self.curveset_repo.create(data)
+    def get_all_for_user(self, user_id: int) -> list[CurveSetSummary]:
+        """Return all curve sets belonging to *user_id* (no curve arrays)."""
+        curve_sets = self.curveset_repo.get_all_for_user(user_id)
+        return [CurveSetSummary.model_validate(cs, from_attributes=True) for cs in curve_sets]
 
-    def create_curve_set_for_task(self, data: CurveSetCreate, task_id: int) -> CurveSet:
-        curve_set_db = self.curveset_repo.create_with_curves(data, task_id)
+    def get_curve_set(self, curve_set_id: int, user_id: int) -> CurveSet:
+        """Return a single curve set that belongs to *user_id*."""
+        cset = self.curveset_repo.get_by_id_for_user(curve_set_id, user_id)
+        if cset is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Curve set not found.")
+        return CurveSet.model_validate(cset, from_attributes=True)
+
+    # ------------------------------------------------------------------
+    # Creation
+    # ------------------------------------------------------------------
+
+    def create_curve_set(self, data: CurveSetCreate, user_id: int) -> CurveSet:
+        curve_set_db = self.curveset_repo.create_with_curves(data, user_id)
         return CurveSet.model_validate(curve_set_db, from_attributes=True)
 
     def generate_curve(self, config: CurveConfig):
         curve_generator = CurveGenerator(config)
-        data = curve_generator.get_data()
-        return data
+        return curve_generator.get_data()
 
-    def generate_curve_set(self, generation_config: CurveSetConfig) -> CurveSet: 
-        # TODO: create conf schema
-        print('generate')
+    def generate_curve_set(self, generation_config: CurveSetConfig, user_id: int) -> CurveSet:
         curve_confs = [
             CurveConfig(
                 a1=a1,
@@ -47,35 +59,30 @@ class CurveSetsService:
             for a1 in generation_config.a1_coeffs
         ]
 
-        curves = [self.generate_curve(curve_conf) for curve_conf in curve_confs]
+        curves = [self.generate_curve(conf) for conf in curve_confs]
 
         curve_set = CurveSetCreate(
-            description='Sample',
-            curves=curves
-            )
+            title=generation_config.title,
+            description="Generated curve set",
+            curves=curves,
+        )
 
-        curve_set_db = self.curveset_repo.create_with_curves(curve_set, generation_config.task_id)
-        curve_set_serialized = CurveSet.model_validate(curve_set_db, from_attributes=True)
-        return curve_set_serialized
+        curve_set_db = self.curveset_repo.create_with_curves(curve_set, user_id)
+        return CurveSet.model_validate(curve_set_db, from_attributes=True)
 
-    def create_curve_set_from_uploaded(self, uploaded: UploadedCurveSet) -> CurveSet:
-        """
-        Build CurveCreate objects from raw intensity arrays and a shared IRF, then attach to the given task.
-        """
-        if uploaded.irf is None:
+    def create_curve_set_from_uploaded(self, uploaded: UploadedCurveSet, user_id: int) -> CurveSet:
+        """Build CurveCreate objects from raw arrays and a shared IRF."""
+        if not uploaded.irf:
             raise ValueError("irf must be provided for uploaded curve sets")
 
-        curves: list[CurveCreate] = []
         irf = uploaded.irf
+        curves: list[CurveCreate] = []
         for curve in uploaded.curves:
-            # Align lengths defensively
             length = min(len(curve.time_axis), len(curve.intensity), len(irf))
-            time_axis = curve.time_axis[:length]
             raw = curve.intensity[:length]
-
             curves.append(
                 CurveCreate(
-                    time_axis=time_axis,
+                    time_axis=curve.time_axis[:length],
                     raw=raw,
                     raw_scaled=raw,
                     convolved=None,
@@ -85,25 +92,29 @@ class CurveSetsService:
                 )
             )
 
-        curve_set = CurveSetCreate(description=uploaded.description, curves=curves)
-        curve_set_db = self.curveset_repo.create_with_curves(curve_set, uploaded.task_id)
+        curve_set = CurveSetCreate(
+            title=uploaded.title,
+            description=uploaded.description,
+            curves=curves,
+        )
+        curve_set_db = self.curveset_repo.create_with_curves(curve_set, user_id)
         return CurveSet.model_validate(curve_set_db, from_attributes=True)
 
-    def add_curve_to_set(self, curve: CurveCreate):
-        """ 
-        Does literally nothing. Nothing at all. Like, it has only `pass` inside
-        """
-        pass
+    # ------------------------------------------------------------------
+    # Mutation
+    # ------------------------------------------------------------------
 
-    def update_curve_set(self, id: int, data: CurveSetPatch) -> CurveSet:
-        set_db = self.curveset_repo.update(id, data)
-        curveset = CurveSet.model_validate(set_db, from_attributes=True)
-        return curveset
+    def update_curve_set(self, curve_set_id: int, data: CurveSetPatch, user_id: int) -> CurveSet:
+        # Verify ownership before mutating
+        existing = self.curveset_repo.get_by_id_for_user(curve_set_id, user_id)
+        if existing is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Curve set not found.")
+        set_db = self.curveset_repo.update(curve_set_id, data)
+        return CurveSet.model_validate(set_db, from_attributes=True)
 
-    def delete_curve_set(self, id: int):
-        try:
-            self.curveset_repo.delete(id)
-            return True
-        except:
-            return False
-    # maybe more functions
+    def delete_curve_set(self, curve_set_id: int, user_id: int) -> bool:
+        existing = self.curveset_repo.get_by_id_for_user(curve_set_id, user_id)
+        if existing is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Curve set not found.")
+        self.curveset_repo.delete(curve_set_id)
+        return True

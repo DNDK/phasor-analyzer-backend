@@ -3,12 +3,17 @@ from pydantic import BaseModel, model_validator
 from schemas.curve import CurveCreate
 from schemas.curve_set import CurveSetCreate
 
+
 class AnalysisConfig(BaseModel):
-    task_id: int
+    """Trigger analysis on an existing curve set owned by the current user."""
+
+    curve_set_id: int
+
 
 class UserDataAnalysisConfig(BaseModel):
-    """Payload for processing user-provided curves end-to-end."""
-    task_title: str = "User data task"
+    """Create a curve set from raw data and immediately run analysis."""
+
+    title: str = "Research"
     description: str = "User provided curve set"
     curves: list[CurveCreate]
 
@@ -21,4 +26,8 @@ class UserDataAnalysisConfig(BaseModel):
         return self
 
     def to_curve_set_create(self) -> CurveSetCreate:
-        return CurveSetCreate(description=self.description, curves=self.curves)
+        return CurveSetCreate(
+            title=self.title,
+            description=self.description,
+            curves=self.curves,
+        )

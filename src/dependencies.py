@@ -1,45 +1,40 @@
-# from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-# from sqlalchemy.orm import DeclarativeBase, Session
-# from sqlalchemy.ext.declarative import declarative_base
-
-from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase
-from sqlalchemy import create_engine
-
-from fastapi import Depends
-
-from contextlib import asynccontextmanager
-from typing import Type, TypeVar, Generator
 import os
+from contextlib import contextmanager
+from typing import Generator, Type, TypeVar
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+from auth.security import decode_access_token
 from models.analysis_results import AnalysisResult
-from models.curve_set import CurveSet
-from models.task import Task as TaskModel
+from models.base import Base
 from models.curve import Curve
+from models.curve_set import CurveSet
+from models.user import User
 from repositories.analysis_results import AnalysisResultsRepository
 from repositories.base_repository import BaseRepository
 from repositories.curve import CurveRepository
 from repositories.curve_set import CurveSetRepository
-from repositories.task import TaskRepository
+from repositories.user import UserRepository
 from services.analysis_results import AnalysisResultsService
 from services.curve_sets import CurveSetsService
-from services.task import TaskService
-from sqlalchemy import MetaData, text
-import asyncio
-from models.base import Base
-from contextlib import contextmanager
+from services.user import UserService
 
-# Use env override, fall back to in-container Postgres service (with schema phsch)
+# ---------------------------------------------------------------------------
+# Database setup
+# ---------------------------------------------------------------------------
+
 raw_db_url = os.getenv("DATABASE_URL", "").strip()
-# Explicitly force psycopg2 driver if not provided
 DATABASE_URL = (
     raw_db_url
     or "postgresql+psycopg2://analyzer:analyzer_pass@db:5432/analyzer?options=-csearch_path%3Dphsch"
 )
 
-# One engine/sessionmaker, no duplicates
 engine = create_engine(
     DATABASE_URL,
-    echo=True,
+    echo=False,  # set True only during development
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,
@@ -48,16 +43,20 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
-# Ensure schema exists, then create tables
+# Ensure schema exists and all tables are created on startup
 with engine.begin() as conn:
-  conn.execute(text("CREATE SCHEMA IF NOT EXISTS phsch"))
-  Base.metadata.create_all(bind=conn)
+    conn.execute(text("CREATE SCHEMA IF NOT EXISTS phsch"))
+    Base.metadata.create_all(bind=conn)
 
-T = TypeVar('T', bound=BaseRepository)
+T = TypeVar("T", bound=BaseRepository)
 
-# Универсальный менеджер сессий
+# ---------------------------------------------------------------------------
+# Session context manager
+# ---------------------------------------------------------------------------
+
 @contextmanager
 def get_db() -> Generator[Session, None, None]:
+    """Yield a database session, rolling back on error."""
     session = SessionLocal()
     try:
         yield session
@@ -67,25 +66,60 @@ def get_db() -> Generator[Session, None, None]:
     finally:
         session.close()
 
-# Фабрика репозиториев
-def get_repository(repo_type: Type[T], model: Type[DeclarativeBase]) -> T:
-    with get_db() as session:
-        return repo_type(session=session, model=model)
+# ---------------------------------------------------------------------------
+# Service DI factories
+# ---------------------------------------------------------------------------
 
-# DI для сервисов
-def get_task_servie():
+def get_user_service():
     with get_db() as session:
-        task_repo = TaskRepository(session=session, model=TaskModel)
-        yield TaskService(task_repo)
+        user_repo = UserRepository(session=session, model=User)
+        yield UserService(user_repo)
 
-def get_curve_set_servie():
+
+def get_curve_set_service():
     with get_db() as session:
         curve_set_repo = CurveSetRepository(session=session, model=CurveSet)
         curve_repo = CurveRepository(session=session, model=Curve)
         yield CurveSetsService(curve_set_repo, curve_repo)
+
 
 def get_analysis_results_service():
     with get_db() as session:
         analysis_repo = AnalysisResultsRepository(session=session, model=AnalysisResult)
         curve_set_repo = CurveSetRepository(session=session, model=CurveSet)
         yield AnalysisResultsService(analysis_repo, curve_set_repo)
+
+# ---------------------------------------------------------------------------
+# Authentication dependency
+# ---------------------------------------------------------------------------
+
+_bearer_scheme = HTTPBearer(auto_error=True)
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
+    user_service: UserService = Depends(get_user_service),
+) -> User:
+    """
+    Validate the Bearer token and return the authenticated User.
+    Raises HTTP 401 if the token is missing, malformed, or expired.
+    Raises HTTP 403 if the account is deactivated.
+    """
+    try:
+        user_id = decode_access_token(credentials.credentials)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = user_service.get_by_id(user_id)  # raises 404 if user deleted
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated.",
+        )
+
+    return user

@@ -16,8 +16,9 @@ class UploadedCurve(BaseModel):
 
 
 class UploadedCurveSet(BaseModel):
-    """Payload for uploading raw curve data to attach to a task."""
-    task_id: int
+    """Payload for uploading raw curve data to create a new curve set."""
+
+    title: str = "Research"
     description: str = "Uploaded curve set"
     irf: List[float]
     curves: List[UploadedCurve]

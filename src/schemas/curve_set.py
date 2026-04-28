@@ -1,18 +1,24 @@
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from enums.curve_set_status import CurveSetStatus
 from .curve import Curve, CurveCreate
 
-class CurveSetBase(BaseModel):
-    description: str
 
-class CurveSetCreate(CurveSetBase):
-    model_config = ConfigDict(from_attributes=True)
-    curves: list[CurveCreate]
+class CurveSetCreate(BaseModel):
+    """Internal schema used when programmatically creating a curve set."""
+
+    title: str = "Research"
     description: str = "Sample"
+    curves: list[CurveCreate] = []
+
 
 class CurveSetUserDataCreate(BaseModel):
-    """Payload for attaching user-provided curves to an existing task."""
-    task_id: int
+    """Payload for creating a curve set from user-provided curve data."""
+
+    title: str = "Research"
     description: str = "User provided curve set"
     curves: list[CurveCreate]
 
@@ -24,15 +30,48 @@ class CurveSetUserDataCreate(BaseModel):
             raise ValueError("irf must be provided for all user-supplied curves")
         return self
 
-class CurveSet(CurveSetBase):
+    def to_curve_set_create(self) -> "CurveSetCreate":
+        return CurveSetCreate(
+            title=self.title,
+            description=self.description,
+            curves=self.curves,
+        )
+
+
+class CurveSet(BaseModel):
+    """Full curve set representation returned to the client."""
+
     model_config = ConfigDict(from_attributes=True)
+
     id: int
-    curves: list[Curve]
-    task_id: int | None = None
-    description: str
+    title: str
+    description: Optional[str]
+    status: CurveSetStatus
+    processing_time: Optional[float]
+    created_at: datetime
+    user_id: int
+    curves: list[Curve] = []
+
+
+class CurveSetSummary(BaseModel):
+    """Lightweight curve set representation for list endpoints."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    description: Optional[str]
+    status: CurveSetStatus
+    processing_time: Optional[float]
+    created_at: datetime
+
 
 class CurveSetPatch(BaseModel):
+    """Partial update schema — all fields optional."""
+
     model_config = ConfigDict(from_attributes=True)
-    curves: list[Curve] | None = None
-    task_id: int | None = None
-    description: str | None = None
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[CurveSetStatus] = None
+    processing_time: Optional[float] = None

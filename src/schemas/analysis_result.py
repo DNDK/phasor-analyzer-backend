@@ -1,48 +1,52 @@
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+from typing import Optional
 
-from .curve_set import CurveSet
+from pydantic import BaseModel, ConfigDict
 
 
 class AnalysisResultCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     curve_set_id: int
+    processing_time: Optional[float] = None
 
     # Results
-    dw_real: list[float | None]
-    dw_imag: list[float | None]
+    dw_real: list[Optional[float]]
+    dw_imag: list[Optional[float]]
 
-    coeff_v: float | None
-    coeff_u: float | None
+    coeff_v: Optional[float]
+    coeff_u: Optional[float]
 
-    tau1: float | None
-    tau2: float | None
+    tau1: Optional[float]
+    tau2: Optional[float]
 
-    a1_coeffs: list[float | None]
-    a2_coeffs: list[float | None]
+    a1_coeffs: list[Optional[float]]
+    a2_coeffs: list[Optional[float]]
 
-    omega: float | None
+    omega: Optional[float]
 
 
 class AnalysisResult(AnalysisResultCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
+    created_at: datetime
 
 
 class AnalysisResultPatch(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    curve_set_id: int | None = None
+    dw_real: Optional[list[Optional[float]]] = None
+    dw_imag: Optional[list[Optional[float]]] = None
 
-    dw_real: list[float | None] | None = None
-    dw_imag: list[float | None] | None = None
+    coeff_v: Optional[float] = None
+    coeff_u: Optional[float] = None
 
-    coeff_v: float | None = None
-    coeff_u: float | None = None
+    tau1: Optional[float] = None
+    tau2: Optional[float] = None
 
-    tau1: float | None = None
-    tau2: float | None = None
+    a1_coeffs: Optional[list[Optional[float]]] = None
+    a2_coeffs: Optional[list[Optional[float]]] = None
 
-    a1_coeffs: list[float | None] | None = None
-    a2_coeffs: list[float | None] | None = None
-
-    omega: float | None = None
+    omega: Optional[float] = None
+    processing_time: Optional[float] = None
